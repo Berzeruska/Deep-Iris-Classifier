@@ -1,0 +1,56 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler, LabelEncoder, OneHotEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, classification_report
+
+# 1. Carregamento de Dados
+# Nota: No Colab, certifique-se de que o arquivo está no caminho correto
+url = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
+colunas = ['sepal_length', 'sepal_width', 'petal_length', 'petal_width', 'class']
+df_iris = pd.read_csv(url, names=colunas)
+
+# 2. Preparação das Entradas (X) e Alvos (y)
+X = df_iris.iloc[:, 0:4].values
+y = df_iris.iloc[:, 4].values
+
+# 3. Pré-processamento Profissional
+# Normalização das entradas
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+# Codificação das classes (Nomes -> Números -> Vetores)
+label_enc = LabelEncoder()
+y_numeric = label_enc.fit_transform(y)
+y_numeric = y_numeric.reshape(-1, 1)
+
+onehot = OneHotEncoder(sparse_output=False) # sparse=False facilita o uso posterior
+y_final = onehot.fit_transform(y_numeric)
+
+# 4. Divisão Treino/Teste (80% Treino / 20% Teste)
+X_train, X_test, y_train, y_test = train_test_split(X, y_final, test_size=0.2, random_state=42)
+
+# 5. Configuração da MLP
+# Usei 'relu' e 3 camadas ocultas de 10 neurônios cada
+mlp = MLPClassifier(
+    hidden_layer_sizes=(10, 10, 10), 
+    max_iter=1000, 
+    activation='relu', 
+    solver='adam', 
+    random_state=42,
+    verbose=False # Mude para True se quiser ver o erro caindo por iteração
+)
+
+# 6. Treinamento
+mlp.fit(X_train, y_train)
+
+# 7. Avaliação de Performance
+predicoes = mlp.predict(X_test)
+acuracia = accuracy_score(y_test, predicoes)
+
+print(f"--- Relatório de Performance ---")
+print(f"Acurácia Global: {acuracia * 100:.2f}%")
+print("\nMatriz de Classificação Detalhada:")
+print(classification_report(y_test, predicoes, target_names=label_enc.classes_))
